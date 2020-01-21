@@ -1,0 +1,70 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: va
+  labels:
+    app: va
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: va
+    spec:
+      containers:
+      - name: va
+        image: gcr.io/w11-apollo/va:master
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+        resources:
+          requests:
+            memory: 50Mi
+            cpu: 40m
+          limits:
+            memory: 50Mi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: va
+  labels:
+    app: va
+spec:
+  type: NodePort
+  selector:
+    app: va
+  ports:
+  - port: 80
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: va
+  labels:
+    app: va
+  annotations:
+    networking.gke.io/managed-certificates: va-cert
+    kubernetes.io/ingress.allow-http: "false"
+spec:
+  backend:
+    serviceName: va
+    servicePort: 80

@@ -1,0 +1,3 @@
+resources:
+- name: ingress-global-address
+  type: compute.v1.globalAddress

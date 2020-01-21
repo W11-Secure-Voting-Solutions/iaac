@@ -1,0 +1,119 @@
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: backend
+  name: backend
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:mainline-alpine
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        volumeMounts:
+        - name: backend-shared
+          mountPath: /shared
+        - name: backend-nginx-config
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        resources:
+          limits:
+            memory: 30Mi
+          requests:
+            cpu: 20m
+            memory: 30Mi
+      - name: backend
+        image: gcr.io/w11-apollo/backend:master-062f0b47
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: backend-env
+        - secretRef:
+            name: backend
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sleep","2"]
+          postStart:
+            exec:
+              command: ["cp","-r","/code/static","/shared/static"]
+        volumeMounts:
+        - name: backend-shared
+          mountPath: /shared
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 50m
+            memory: 200Mi
+      volumes:
+      - name: backend-shared
+        emptyDir:
+          medium: Memory
+      - name: backend-nginx-config
+        configMap:
+            name: backend-nginx
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-env
+data:
+  POSTGRES_HOST: postgres-apollo
+  POSTGRES_PORT: "5432"
+  DJANGO_SETTINGS_MODULE: config.settings.production
+  DJANGO_SETTINGS_MODULE_TEST: config.settings.test
+  ALLOWED_HOSTS: localhost,127.0.0.1,127-0-0-1.nip.io,apollo.thenflash.com
+  GOOGLE_CLIENT_ID: 406291997354-2lgdtvctu3pi4rj8r29jqo85i2skdsp3.apps.googleusercontent.com
+  SECURE_URL_HOST: https://gp.thenflash.com
+  URL_HOST: https://gp.thenflash.com
+  CELERY_BROKER_URL: redis://redis-apollo:6379
+  POSTGRES_DB: postgres-apollo
+  POSTGRES_USER: postgres-apollo
+  EMAIL_HOST: ssl0.ovh.net
+  EMAIL_PORT: "993"
+  EMAIL_HOST_USER: "voting@thenflash.com"
+  EMAIL_USE_TLS: "1"
+
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  type: NodePort
+  selector:
+    app: backend
+  ports:
+  - port: 80

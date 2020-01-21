@@ -1,0 +1,29 @@
+#THIS FILE WAS GENERATED, DO NOT EDIT MANUALLY
+
+apiVersion: v1
+data:
+  default.conf: |
+    server {
+        listen       80;
+
+        location /static {
+            root   /shared;
+        }
+
+        location / {
+            proxy_pass http://127.0.0.1:8000;
+        }
+
+        location = /healthz {
+            return 200;
+        }
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /code/static;
+        }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: backend-nginx

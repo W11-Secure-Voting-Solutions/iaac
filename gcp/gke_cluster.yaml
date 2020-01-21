@@ -1,0 +1,62 @@
+resources:
+- name: apollo
+  type: container.v1.cluster
+
+  properties:
+    zone: europe-west3-a
+    cluster:
+      name: apollo
+      description: Main Apollo Cluster
+      initialClusterVersion: "-" # - means default.
+      loggingService: logging.googleapis.com
+      monitoringService: monitoring.googleapis.com
+
+      clusterIpv4Cidr: 10.0.0.0/16
+      ipAllocationPolicy:
+        useIpAliases: true
+        createSubnetwork: true
+
+      locations: [
+        'europe-west3-a',
+        'europe-west3-b',
+        'europe-west3-c'
+      ]
+
+      maintenancePolicy:
+        window:
+          dailyMaintenanceWindow:
+            startTime: 05:00
+
+      addonsConfig:
+        httpLoadBalancing:
+          disabled: false
+
+      nodePools:
+        - name: apollo-np-1
+          initialNodeCount: 1
+
+          management:
+            autoUpgrade: true
+            autoRepair: true
+
+          autoscaling:
+            enabled: true
+            minNodeCount: 1
+            maxNodeCount: 10
+
+          config:
+            machineType: g1-small
+            diskSizeGb: 10
+            preemptible: true
+            oauthScopes:
+              - https://www.googleapis.com/auth/bigquery
+              - https://www.googleapis.com/auth/cloud-platform
+              - https://www.googleapis.com/auth/compute
+              - https://www.googleapis.com/auth/datastore
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/logging.write
+              - https://www.googleapis.com/auth/monitoring.write
+              - https://www.googleapis.com/auth/pubsub
+              - https://www.googleapis.com/auth/service.management
+              - https://www.googleapis.com/auth/sqlservice.admin
+

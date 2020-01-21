@@ -1,0 +1,40 @@
+resources:
+- name: postgres-apollo
+  type: sqladmin.v1beta4.instance
+  properties:
+    backendType: SECOND_GEN
+    instanceType: CLOUD_SQL_INSTANCE
+    databaseVersion: POSTGRES_9_6
+    region: europe-west3
+    settings:
+      tier: db-custom-1-3840
+      dataDiskSizeGb: 10
+      dataDiskType: PD_SSD
+      storageAutoResize: false
+      activationPolicy: ALWAYS
+      ipConfiguration:
+        ipv4Enabled: false
+        privateNetwork: projects/w11-apollo/global/networks/default
+      maintenanceWindow:
+        day: 1
+        hour: 1
+
+- name: postgres-apollo-db
+  type: sqladmin.v1beta4.database
+  properties:
+    name: postgres-apollo
+    instance: postgres-apollo
+    charset: utf8
+  metadata:
+    dependsOn:
+    - postgres-apollo
+
+- name: postgres-apollo-user
+  type: sqladmin.v1beta4.user
+  properties:
+    name: postgres-apollo
+    instance: postgres-apollo
+    password: hst6rmS883LPFry6hugkqSrXPNzR1cp3
+  metadata:
+    dependsOn:
+    - postgres-apollo-db

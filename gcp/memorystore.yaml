@@ -1,0 +1,10 @@
+resources:
+- name: backend
+  type: gcp-types/redis-v1beta1:projects.locations.instances
+  properties:
+    parent: projects/w11-apollo/locations/europe-west3
+    instanceId: backend
+    authorizedNetwork: projects/w11-apollo/global/networks/default
+    memorySizeGb: 1
+    tier: BASIC
+    displayName: Apollo Redis

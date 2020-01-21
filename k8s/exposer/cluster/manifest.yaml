@@ -1,0 +1,45 @@
+apiVersion: networking.gke.io/v1beta1
+kind: ManagedCertificate
+metadata:
+  name: exposer-cert
+spec:
+  domains:
+  - gp.thenflash.com
+
+---
+
+apiVersion: networking.gke.io/v1beta1
+kind: ManagedCertificate
+metadata:
+  name: va-cert
+spec:
+  domains:
+  - va.thenflash.com
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: exposer
+  labels:
+    app: exposer
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: ingress-global-address
+    networking.gke.io/managed-certificates: "exposer-cert,va-cert"
+    kubernetes.io/ingress.allow-http: "false"
+spec:
+  rules:
+    - host: va.thenflash.com
+      http:
+        paths:
+        - backend:
+            serviceName: va
+            servicePort: 80
+    - host: gp.thenflash.com
+      http:
+        paths:
+        - backend:
+            serviceName: backend
+            servicePort: 80
+
